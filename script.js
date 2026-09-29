@@ -4,9 +4,17 @@ const menuButton = document.querySelector(".menu-toggle");
 const navigation = document.querySelector("#primary-navigation");
 
 function setMenuOpen(isOpen) {
+  if (!menuButton || !navigation) return;
+
   menuButton.setAttribute("aria-expanded", String(isOpen));
   menuButton.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
   navigation.classList.toggle("is-open", isOpen);
+  navigation.style.opacity = isOpen ? "1" : "0";
+  navigation.style.visibility = isOpen ? "visible" : "hidden";
+  navigation.style.pointerEvents = isOpen ? "auto" : "none";
+  navigation.style.transform = isOpen ? "translateY(0)" : "translateY(-8px)";
+  navigation.style.height = isOpen ? "calc(100vh - 93px)" : "46px";
+  navigation.style.maxHeight = isOpen ? "calc(100vh - 93px)" : "46px";
   document.body.classList.toggle("menu-open", isOpen);
 }
 
@@ -66,3 +74,4 @@ sampleForm.addEventListener("submit", (event) => {
   formStatus.textContent = "Your email app will open with the request ready to review. Nothing is sent until you choose to send it.";
   window.location.href = mailto;
 });
+
