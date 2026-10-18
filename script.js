@@ -3,35 +3,55 @@ document.documentElement.classList.add("js-enabled");
 const menuButton = document.querySelector(".menu-toggle");
 const navigation = document.querySelector("#primary-navigation");
 
+function updateMenuPosition() {
+  if (!menuButton || !navigation || menuButton.getAttribute("aria-expanded") !== "true") return;
+
+  const header = menuButton.closest(".site-header");
+  if (header) navigation.style.setProperty("--menu-top", `${header.getBoundingClientRect().bottom}px`);
+}
+
 function setMenuOpen(isOpen) {
   if (!menuButton || !navigation) return;
 
   menuButton.setAttribute("aria-expanded", String(isOpen));
   menuButton.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
   navigation.classList.toggle("is-open", isOpen);
-  navigation.style.opacity = isOpen ? "1" : "0";
-  navigation.style.visibility = isOpen ? "visible" : "hidden";
-  navigation.style.pointerEvents = isOpen ? "auto" : "none";
-  navigation.style.transform = isOpen ? "translateY(0)" : "translateY(-8px)";
-  navigation.style.height = isOpen ? "calc(100vh - 93px)" : "46px";
-  navigation.style.maxHeight = isOpen ? "calc(100vh - 93px)" : "46px";
   document.body.classList.toggle("menu-open", isOpen);
+  if (isOpen) {
+    updateMenuPosition();
+  } else {
+    navigation.style.removeProperty("--menu-top");
+  }
 }
 
-menuButton.addEventListener("click", () => {
-  setMenuOpen(menuButton.getAttribute("aria-expanded") !== "true");
-});
+if (menuButton && navigation) {
+  menuButton.addEventListener("click", () => {
+    setMenuOpen(menuButton.getAttribute("aria-expanded") !== "true");
+  });
 
-navigation.addEventListener("click", (event) => {
-  if (event.target.closest("a")) setMenuOpen(false);
-});
+  navigation.addEventListener("click", (event) => {
+    if (event.target.closest("a")) {
+      const wasOpen = menuButton.getAttribute("aria-expanded") === "true";
+      setMenuOpen(false);
+      if (wasOpen) menuButton.focus({ preventScroll: true });
+    }
+  });
 
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") {
-    setMenuOpen(false);
-    menuButton.focus();
-  }
-});
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menuButton.getAttribute("aria-expanded") === "true") {
+      setMenuOpen(false);
+      menuButton.focus();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.matchMedia("(min-width: 921px)").matches) {
+      setMenuOpen(false);
+    } else {
+      updateMenuPosition();
+    }
+  });
+}
 
 const revealItems = document.querySelectorAll(".reveal");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -54,25 +74,27 @@ if ("IntersectionObserver" in window && !prefersReducedMotion) {
 const sampleForm = document.querySelector("#sample-form");
 const formStatus = document.querySelector("#form-status");
 
-sampleForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (!sampleForm.reportValidity()) return;
+if (sampleForm && formStatus) {
+  sampleForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!sampleForm.reportValidity()) return;
 
-  const formData = new FormData(sampleForm);
-  const fields = [
-    ["Name", formData.get("name")],
-    ["Company", formData.get("company")],
-    ["Work email", formData.get("email")],
-    ["Estimated quantity", sampleForm.elements.quantity.selectedOptions[0].textContent],
-    ["Interested in", sampleForm.elements.interest.selectedOptions[0].textContent],
-    ["Message", formData.get("message") || "Not provided"]
-  ];
-  const body = fields.map(([label, value]) => `${label}: ${value}`).join("\n");
-  const subject = `Embiox ${sampleForm.elements.interest.value} enquiry from ${formData.get("company")}`;
-  const mailto = `mailto:info@embiox.lv?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const formData = new FormData(sampleForm);
+    const fields = [
+      ["Name", formData.get("name")],
+      ["Company", formData.get("company")],
+      ["Work email", formData.get("email")],
+      ["Estimated quantity", sampleForm.elements.quantity.selectedOptions[0].textContent],
+      ["Interested in", sampleForm.elements.interest.selectedOptions[0].textContent],
+      ["Message", formData.get("message") || "Not provided"]
+    ];
+    const body = fields.map(([label, value]) => `${label}: ${value}`).join("\n");
+    const subject = `Embiox ${sampleForm.elements.interest.value} enquiry from ${formData.get("company")}`;
+    const mailto = `mailto:info@embiox.lv?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  formStatus.textContent = "Your email app will open with the request ready to review. Nothing is sent until you choose to send it.";
-  window.location.href = mailto;
-});
+    formStatus.textContent = "Your email app will open with the request ready to review. Nothing is sent until you choose to send it.";
+    window.location.href = mailto;
+  });
+}
 
 
